@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json())
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1towayy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1towayy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -30,6 +30,33 @@ async function run() {
 
         const userCollection = client.db("Nippon").collection("users");
 
+
+        // middlewares
+        const verifyToken = (req, res, next) => {
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'unauthorized access' });
+            }
+            const token = req?.headers?.authorization?.split(' ')[1];
+            jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'unauthorized access' });
+                }
+                req.decoded = decoded;
+                next();
+            })
+        }
+
+        const verifyAdmin = async (req, res, next) => {
+            const email = req?.decoded?.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const isAdmin = user?.role === 'admin';
+            if (!isAdmin) {
+                return res.status(403).send({ status: 'forbidden access' })
+            }
+            next();
+        }
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             const filter = { email: user.email };
@@ -41,6 +68,22 @@ async function run() {
             user.password = await bcrypt.hash(user?.password, 10);
             const result = await userCollection.insertOne(user);
             res.send(result);
+        })
+
+        app.post('/login', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            // const filter = { $and: [{ email: user.email }, { password: user.password }] };
+            const filter = { email: user.email };
+            const checkUser = await userCollection.findOne(filter);
+            const verifyPass = await bcrypt.compare(user.password, checkUser.password);
+            console.log(checkUser);
+            if (checkUser && verifyPass) {
+                const token = jwt.sign(checkUser, process.env.ACCESS_TOKEN, { expiresIn: '6h' })
+                return res.send({ token, userData: checkUser, status: 'success' });
+            } else {
+                return res.send({ userData: {}, status: 'failed' })
+            }
         })
     } finally {
         // Ensures that the client will close when you finish/error
