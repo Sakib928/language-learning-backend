@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -24,8 +25,23 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+        const userCollection = client.db("Nippon").collection("users");
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const check = await userCollection.findOne(filter);
+            console.log(check);
+            if (check) {
+                return res.send({ status: 'duplicate' })
+            };
+            user.password = await bcrypt.hash(user?.password, 10);
+            const result = await userCollection.insertOne(user);
+            res.send(result);
+        })
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
