@@ -29,7 +29,8 @@ async function run() {
         // console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
         const userCollection = client.db("Nippon").collection("users");
-
+        const lessonsCollection = client.db("Nippon").collection("lessons");
+        const vocabCollection = client.db("Nippon").collection("vocabularies");
 
         // middlewares
         const verifyToken = (req, res, next) => {
@@ -56,7 +57,7 @@ async function run() {
             }
             next();
         }
-
+        // user related apis
         app.post('/users', async (req, res) => {
             const user = req.body;
             const filter = { email: user.email };
@@ -84,6 +85,22 @@ async function run() {
             } else {
                 return res.send({ userData: {}, status: 'failed' })
             }
+        })
+
+        // lesson related apis
+
+        app.post('/addlessons', verifyToken, verifyAdmin, async (req, res) => {
+            // console.log(req.body);
+            const lesson = req.body;
+            const result = await lessonsCollection.insertOne(lesson);
+            res.send(result);
+        })
+
+        app.post('/addvocabulary', verifyToken, verifyAdmin, async (req, res) => {
+            const vocabulary = req.body;
+            const result = await vocabCollection.insertOne(vocabulary);
+            console.log(vocabulary);
+            res.send(result);
         })
     } finally {
         // Ensures that the client will close when you finish/error
