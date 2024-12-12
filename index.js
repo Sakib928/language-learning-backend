@@ -7,7 +7,10 @@ require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', "https://nippon-learn.netlify.app"],
+    credentials: true
+}))
 app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1towayy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -62,7 +65,7 @@ async function run() {
             const user = req.body;
             const filter = { email: user.email };
             const check = await userCollection.findOne(filter);
-            console.log(check);
+            // console.log(check);
             if (check) {
                 return res.send({ status: 'duplicate' })
             };
@@ -73,7 +76,7 @@ async function run() {
 
         app.post('/login', async (req, res) => {
             const user = req.body;
-            console.log(user);
+            // console.log(user);
             // const filter = { $and: [{ email: user.email }, { password: user.password }] };
             const filter = { email: user.email };
             const checkUser = await userCollection.findOne(filter);
@@ -173,7 +176,7 @@ async function run() {
         app.post('/addvocabulary', verifyToken, verifyAdmin, async (req, res) => {
             const vocabulary = req.body;
             const result = await vocabCollection.insertOne(vocabulary);
-            console.log(vocabulary);
+            // console.log(vocabulary);
             res.send(result);
         })
 
