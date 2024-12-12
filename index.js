@@ -115,7 +115,24 @@ async function run() {
         })
 
         app.get('/lessons', verifyToken, verifyAdmin, async (req, res) => {
-            const result = await lessonsCollection.find().toArray();
+            const result = await lessonsCollection.aggregate([
+                {
+                    $lookup: {
+                        from: "vocabularies",
+                        localField: "lessonNumber",
+                        foreignField: "lessonNumber",
+                        as: "matchedVocabularies"
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        lessonNumber: 1,
+                        lessonTitle: 1,
+                        vocabulariesFound: { $size: "$matchedVocabularies" }
+                    }
+                }
+            ]).toArray();
             res.send(result);
         })
 
@@ -151,6 +168,7 @@ async function run() {
             const result = await vocabCollection.find().toArray();
             res.send(result);
         })
+
 
         app.patch('/vocabularies/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
