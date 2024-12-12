@@ -114,7 +114,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/lessons', verifyToken, verifyAdmin, async (req, res) => {
+        app.get('/lessons', verifyToken, async (req, res) => {
             const result = await lessonsCollection.aggregate([
                 {
                     $lookup: {
@@ -129,10 +129,23 @@ async function run() {
                         _id: 1,
                         lessonNumber: 1,
                         lessonTitle: 1,
-                        vocabulariesFound: { $size: "$matchedVocabularies" }
+                        vocabulariesFound: { $size: "$matchedVocabularies" },
+                        words: "$matchedVocabularies"
                     }
                 }
             ]).toArray();
+            res.send(result);
+        })
+
+        app.get('/singleLesson/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const result = await lessonsCollection.findOne(filter);
+            res.send(result);
+        })
+
+        app.get("/allLessons", async (req, res) => {
+            const result = await lessonsCollection.find().toArray();
             res.send(result);
         })
 
