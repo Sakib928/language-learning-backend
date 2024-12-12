@@ -87,6 +87,24 @@ async function run() {
             }
         })
 
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.patch('/users/:email/:role', async (req, res) => {
+            const userEmail = req.params.email;
+            const userRole = req.params.role;
+            const filter = { email: userEmail };
+            const update = {
+                $set: {
+                    role: userRole
+                }
+            }
+            const result = await userCollection.updateOne(filter, update);
+            res.send(result);
+        })
+
         // lesson related apis
 
         app.post('/addlessons', verifyToken, verifyAdmin, async (req, res) => {
