@@ -114,10 +114,65 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/lessons', verifyToken, verifyAdmin, async (req, res) => {
+            const result = await lessonsCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.patch("/lessons/:id", verifyToken, verifyAdmin, async (req, res) => {
+            const lessonId = req.params.id;
+            const data = req.body;
+            const filter = { _id: new ObjectId(lessonId) };
+            const update = {
+                $set: {
+                    lessonNumber: data.lessonNumber,
+                    lessonTitle: data.lessonTitle
+                }
+            }
+            const result = await lessonsCollection.updateOne(filter, update);
+            res.send(result);
+        })
+
+        app.delete("/lessons/:id", verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const result = await lessonsCollection.deleteOne(filter);
+            res.send(result);
+        })
+
         app.post('/addvocabulary', verifyToken, verifyAdmin, async (req, res) => {
             const vocabulary = req.body;
             const result = await vocabCollection.insertOne(vocabulary);
             console.log(vocabulary);
+            res.send(result);
+        })
+
+        app.get('/vocabularies', verifyToken, verifyAdmin, async (req, res) => {
+            const result = await vocabCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.patch('/vocabularies/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const update = {
+                $set: {
+                    word: data.word,
+                    pronounciation: data.pronounciation,
+                    meaning: data.meaning,
+                    whentosay: data.whentosay,
+                    lessonNumber: data.lessonNumber
+                }
+            }
+            const result = await vocabCollection.updateOne(filter, update);
+            res.send(result);
+        })
+
+        app.delete("/vocabularies/:id", verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const result = await vocabCollection.deleteOne(filter);
             res.send(result);
         })
     } finally {
